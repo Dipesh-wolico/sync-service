@@ -1,0 +1,35 @@
+{
+	"compilerOptions": {
+		"typeRoots": ["./node_modules/@types", "./src/types"],
+		"noImplicitAny": true,
+		"incremental": true,
+		"target": "es6",
+		"lib": ["es2021"],
+		"module": "commonjs",
+		"outDir": "build",
+		"strict": true,
+		// "noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"alwaysStrict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"moduleResolution": "node",
+		"baseUrl": ".",
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"rootDir": "src",
+		"paths": {
+			"src/*": ["src/*"]
+		},
+		"resolveJsonModule": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
+}

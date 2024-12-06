@@ -1,0 +1,13 @@
+{
+	"rules": {
+		"@typescript-eslint/ban-types": [
+			"error",
+			{
+				"types": {
+					"Object": "Avoid using the `Object` type. Did you mean `object`?",
+					"{}": "Avoid using the `{}` type. Consider using a specific interface or type."
+				}
+			}
+		]
+	}
+}
