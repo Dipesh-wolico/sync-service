@@ -186,15 +186,15 @@ export class SoapService {
 					'Content-Type': 'text/xml',
 				},
 				data: `<?xml version="1.0" encoding="utf-8"?>
-            <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-              <soap12:Body>
-                <TesseratiSocieta xmlns="http://tempuri.org/">
-                  <codiceSocieta>${81706}</codiceSocieta>
-                </TesseratiSocieta>
-              </soap12:Body>
-            </soap12:Envelope>`,
+        <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+        <soap12:Body>
+            <CalciatoreByMatricolaEx xmlns="http://tempuri.org/">
+            <matricola>${2353666}</matricola>
+            </CalciatoreByMatricolaEx>
+        </soap12:Body>
+        </soap12:Envelope>`,
 			});
-			console.log(resp.data);
+			console.log('dataO', resp.data);
 
 			const xmlData = await this.parseXmlToJson(
 				resp.data,

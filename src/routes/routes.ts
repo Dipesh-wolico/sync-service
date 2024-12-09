@@ -14,6 +14,21 @@ import type { Request as ExRequest, Response as ExResponse, RequestHandler, Rout
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "SeasonPeriod": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"double","required":true},
+            "period": {"dataType":"string","required":true},
+            "startDate": {"dataType":"datetime","required":true},
+            "endDate": {"dataType":"datetime","required":true},
+            "isActive": {"dataType":"boolean","required":true},
+            "isDeleted": {"dataType":"boolean","required":true},
+            "createDate": {"dataType":"datetime"},
+            "updateDate": {"dataType":"datetime"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
 const templateService = new ExpressTemplateService(models, {"noImplicitAdditionalProperties":"throw-on-extras","bodyCoercion":true});
 
@@ -107,6 +122,35 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getTesseratiSocieta',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/syncronization/syncPlayerData',
+            ...(fetchMiddlewares<RequestHandler>(SynchronizationController)),
+            ...(fetchMiddlewares<RequestHandler>(SynchronizationController.prototype.syncPlayerData)),
+
+            async function SynchronizationController_syncPlayerData(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new SynchronizationController();
+
+              await templateService.apiHandler({
+                methodName: 'syncPlayerData',
                 controller,
                 response,
                 next,

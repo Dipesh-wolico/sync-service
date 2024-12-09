@@ -6,7 +6,7 @@
 		"target": "es6",
 		"lib": ["es2021"],
 		"module": "commonjs",
-		"outDir": "build",
+		"outDir": "./build",
 		"strict": true,
 		// "noImplicitAny": true,
 		"strictNullChecks": true,
@@ -24,12 +24,12 @@
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"rootDir": "src",
-		"paths": {
-			"src/*": ["src/*"]
-		},
+		// "rootDir": "src",
+		// "paths": {
+		// 	"src/*": ["src/*"]
+		// },
 		"resolveJsonModule": true
-	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules"]
+	}
+	// "include": ["src/**/*"],
+	// "exclude": ["node_modules"]
 }

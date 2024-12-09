@@ -18,8 +18,8 @@ const envVarsSchema = Joi.object()
 		_PG_DATABASE: Joi.string().required(),
 		_PG_PORT: Joi.number().min(1).required(),
 		// AUTH
-		_AUTH_CLIENT_ID: Joi.string().min(36).required(),
-		_AUTH_TENANT_ID: Joi.string().min(36).required(),
+		// _AUTH_CLIENT_ID: Joi.string().min(36).required(),
+		// _AUTH_TENANT_ID: Joi.string().min(36).required(),
 	})
 	.unknown();
 
@@ -41,10 +41,10 @@ const config = {
 		database: envVars._PG_DATABASE,
 		port: envVars._PG_PORT,
 	},
-	auth: {
-		clientId: envVars._AUTH_CLIENT_ID,
-		tenantId: envVars._AUTH_TENANT_ID,
-	},
+	// auth: {
+	// 	clientId: envVars._AUTH_CLIENT_ID,
+	// 	tenantId: envVars._AUTH_TENANT_ID,
+	// },
 };
 
 export default config;
