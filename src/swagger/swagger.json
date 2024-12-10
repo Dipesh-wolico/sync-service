@@ -6,51 +6,7 @@
 		"parameters": {},
 		"requestBodies": {},
 		"responses": {},
-		"schemas": {
-			"SeasonPeriod": {
-				"properties": {
-					"id": {
-						"type": "number",
-						"format": "double"
-					},
-					"period": {
-						"type": "string"
-					},
-					"startDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"endDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"isActive": {
-						"type": "boolean"
-					},
-					"isDeleted": {
-						"type": "boolean"
-					},
-					"createDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updateDate": {
-						"type": "string",
-						"format": "date-time"
-					}
-				},
-				"required": [
-					"id",
-					"period",
-					"startDate",
-					"endDate",
-					"isActive",
-					"isDeleted"
-				],
-				"type": "object",
-				"additionalProperties": false
-			}
-		},
+		"schemas": {},
 		"securitySchemes": {}
 	},
 	"info": {
@@ -63,71 +19,6 @@
 		"contact": {}
 	},
 	"paths": {
-		"/examples": {
-			"get": {
-				"operationId": "GetExample",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Example"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
-		"/examples/getTesseratiSocieta": {
-			"post": {
-				"operationId": "GetTesseratiSocieta",
-				"responses": {
-					"200": {
-						"description": "Success",
-						"content": {
-							"application/json": {
-								"schema": {}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Example"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
-		"/syncronization": {
-			"get": {
-				"operationId": "GetTesseratiSocieta",
-				"responses": {
-					"200": {
-						"description": "Success"
-					}
-				},
-				"tags": [
-					"player-synchronization"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
 		"/syncronization/syncPlayerData": {
 			"get": {
 				"operationId": "SyncPlayerData",
@@ -139,7 +30,7 @@
 								"schema": {
 									"properties": {
 										"data": {
-											"$ref": "#/components/schemas/SeasonPeriod"
+											"type": "string"
 										}
 									},
 									"required": [

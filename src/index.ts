@@ -3,22 +3,30 @@ import app from './app';
 import config from './config/config';
 import { PGDataSource } from './modules/db';
 // import { logger } from './modules/logger';
+import { container } from 'tsyringe'; // Use tsyringe or your DI container
+import { SynchronizationService } from './modules/database-synchronization/database-synchronization.service';
 
 let server: any;
 
 PGDataSource.initialize()
 	.then(() => {
+		// Start the HTTP server
 		server = app.listen(config.port, () => {
 			console.log(`Server listening on port: ${config.port}`);
 		});
-		// app.use(logMiddleware);
+
+		// Initialize and run the SyncService
+		const syncService = container.resolve(SynchronizationService);
+		syncService.runSync().catch((err) => {
+			console.error('Error in SyncService:', err);
+		});
 	})
 	.catch((err: any) => {
 		// logger.error(`Error during DB connection! Reason: ${err}`);
 		console.error(err);
 	});
 
-// killing softly && error handling
+// Killing softly & error handling
 const exitHandler = () => {
 	if (server) {
 		server.close(() => {
