@@ -1,7 +1,7 @@
 // import { Repository } from 'typeorm';
 import { MemberFIGC } from '../db/models/MemberFIGC';
-import { Player } from '../db/models/Player';
-import { MemberLega } from '../db/models/MemberLega';
+// import { Player } from '../db/models/Player';
+// import { MemberLega } from '../db/models/MemberLega';
 import { PGDataSource } from '../db';
 import { Parser } from 'xml2js';
 
@@ -17,16 +17,16 @@ import {
 } from '../constants/constants';
 
 export class SynchronizationService {
-	private playerRepo: Repository<Player>;
+	// private playerRepo: Repository<Player>;
 	private memberFigcRepo: Repository<MemberFIGC>;
-	private memberLegaRepo: Repository<MemberLega>;
+	// private memberLegaRepo: Repository<MemberLega>;
 	public seasonRepo: Repository<Season>;
 	public seasonPeriodRepo: Repository<SeasonPeriod>;
 
 	constructor() {
-		this.playerRepo = PGDataSource.getRepository(Player);
+		// this.playerRepo = PGDataSource.getRepository(Player);
 		this.memberFigcRepo = PGDataSource.getRepository(MemberFIGC);
-		this.memberLegaRepo = PGDataSource.getRepository(MemberLega);
+		// this.memberLegaRepo = PGDataSource.getRepository(MemberLega);
 		this.seasonPeriodRepo = PGDataSource.getRepository(SeasonPeriod);
 		this.seasonRepo = PGDataSource.getRepository(Season);
 	}
@@ -37,11 +37,73 @@ export class SynchronizationService {
 	 * @param memberData - Data for the member to be saved or updated.
 	 */
 	public async persistPlayerDataCheck(
-		serialNumber: string,
-		memberData: Partial<MemberFIGC>
+		playerSerialNumber: string,
+		memberData: any,
+		teamSerialNumber: string
 	) {
+		const extractStringValue = (data: any, key: string): string => {
+			return (data[key] as unknown as { string: string }).string;
+		};
+
+		const trainedInItaly36MonthsValue = extractStringValue(
+			memberData,
+			'trainedInItaly36Months'
+		);
+		const trainedInItaly3SeasonsValue = extractStringValue(
+			memberData,
+			'trainedInItaly3Seasons'
+		);
+		const trainedInTeam36MonthsValue = extractStringValue(
+			memberData,
+			'trainedInTeam36Months'
+		);
+		const trainedInTeam3SeasonsValue = extractStringValue(
+			memberData,
+			'trainedInTeam3Seasons'
+		);
+		var trainedInItaly36Months = false;
+		var trainedInItaly3Seasons = false;
+		var trainedInTeam36Months = false;
+		var trainedInTeam3Seasons = false;
+
+		const checkTrainingStatus = (
+			trainingData: any,
+			trainingValue: string,
+			teamSerialNumber: string
+		): boolean => {
+			return (
+				trainingData == '1' ||
+				trainingData == '2' ||
+				trainingValue == teamSerialNumber
+			);
+		};
+
+		trainedInItaly36Months = checkTrainingStatus(
+			memberData.trainedInItaly36Months,
+			trainedInItaly36MonthsValue,
+			teamSerialNumber
+		);
+
+		trainedInItaly3Seasons = checkTrainingStatus(
+			memberData.trainedInItaly3Seasons,
+			trainedInItaly3SeasonsValue,
+			teamSerialNumber
+		);
+
+		trainedInTeam36Months = checkTrainingStatus(
+			memberData.trainedInTeam36Months,
+			trainedInTeam36MonthsValue,
+			teamSerialNumber
+		);
+
+		trainedInTeam3Seasons = checkTrainingStatus(
+			memberData.trainedInTeam3Seasons,
+			trainedInTeam3SeasonsValue,
+			teamSerialNumber
+		);
+
 		const existingFigcMember = await this.memberFigcRepo.findOneBy({
-			serialNumber: Number(serialNumber),
+			serialNumber: Number(playerSerialNumber),
 		});
 
 		if (existingFigcMember) {
@@ -64,14 +126,14 @@ export class SynchronizationService {
 			existingFigcMember.loanOptionDate = memberData.loanOptionDate;
 			existingFigcMember.loanOptionTeam = memberData.loanOptionTeam;
 			// existingFigcMember.idoneity = memberData.idoneity;
-			existingFigcMember.trainedInItaly36Months =
-				memberData.trainedInItaly36Months;
-			existingFigcMember.trainedInItaly3Seasons =
-				memberData.trainedInItaly3Seasons;
-			existingFigcMember.trainedInTeam36Months =
-				memberData.trainedInTeam36Months;
-			existingFigcMember.trainedInTeam3Seasons =
-				memberData.trainedInTeam3Seasons;
+			// existingFigcMember.trainedInItaly36Months =
+			// 	memberData.trainedInItaly36Months;
+			// existingFigcMember.trainedInItaly3Seasons =
+			// 	memberData.trainedInItaly3Seasons;
+			// existingFigcMember.trainedInTeam36Months =
+			// 	memberData.trainedInTeam36Months;
+			// existingFigcMember.trainedInTeam3Seasons =
+			// 	memberData.trainedInTeam3Seasons;
 			existingFigcMember.contractConstraint =
 				memberData.contractConstraint;
 			existingFigcMember.city = memberData.city;
@@ -79,76 +141,69 @@ export class SynchronizationService {
 			existingFigcMember.taxCode = memberData.taxCode;
 			// existingFigcMember.freeTransferCode = memberData.freeTransferCode;
 
-			return await this.memberFigcRepo.save(existingFigcMember);
+			// return await this.memberFigcRepo.save(existingFigcMember);
 		} else {
-			// No record in FIGC, check in Lega
-			const existingLegaMember =
-				await this.memberLegaRepo.findOneBy({
-					serialNumber: Number(serialNumber),
-				});
-
-			const newMemberData = {
-				serialNumber: memberData.serialNumber,
-				firstName: memberData.firstName,
-				lastName: memberData.lastName,
-				birthDate: memberData.birthDate,
-				freeTransfer: memberData.freeTransfer,
-				freeTransferDate: memberData.freeTransferDate,
-				contractEndYear: memberData.contractEndYear,
-				teamId: memberData.teamId,
-				temporaryTeamId: memberData.temporaryTeamId,
-				statusId: memberData.statusId,
-				membershipDate: memberData.membershipDate,
-				loanOptionDate: memberData.loanOptionDate,
-				loanOptionTeam: memberData.loanOptionTeam,
-				// idoneity: memberData.idoneity,
-				trainedInItaly36Months:
-					memberData.trainedInItaly36Months,
-				trainedInItaly3Seasons:
-					memberData.trainedInItaly3Seasons,
-				trainedInTeam36Months: memberData.trainedInTeam36Months,
-				trainedInTeam3Seasons: memberData.trainedInTeam3Seasons,
-				contractConstraint: memberData.contractConstraint,
-				city: memberData.city,
-				provinceId: memberData.provinceId,
-				taxCode: memberData.taxCode,
-				// freeTransferCode: memberData.freeTransferCode,
-			};
-
-			if (existingLegaMember) {
-				// Create a new FIGC member and relate it to the existing Lega member via Player
-
-				const newFigcMember = this.memberFigcRepo.create({
-					...newMemberData,
-				});
-				const savedFigcMember = await this.memberFigcRepo.save(
-					newFigcMember
-				);
-
-				// Create a new Player relationship
-				const newPlayer = this.playerRepo.create({
-					memberFigc: savedFigcMember,
-					memberLega: existingLegaMember,
-				});
-				await this.playerRepo.save(newPlayer);
-
-				return savedFigcMember;
-			} else {
-				// No record in Lega, create a new FIGC member and a new Player relationship
-				const newFigcMember = this.memberFigcRepo.create({
-					...newMemberData,
-				});
-				const savedFigcMember = await this.memberFigcRepo.save(
-					newFigcMember
-				);
-
-				const newPlayer = this.playerRepo.create({
-					memberFigc: savedFigcMember,
-				});
-				await this.playerRepo.save(newPlayer);
-
-				return savedFigcMember;
-			}
+			// // No record in FIGC, check in Lega
+			// const existingLegaMember =
+			// 	await this.memberLegaRepo.findOneBy({
+			// 		serialNumber: Number(playerSerialNumber),
+			// 	});
+			// const newMemberData = {
+			// 	serialNumber: memberData.serialNumber,
+			// 	firstName: memberData.firstName,
+			// 	lastName: memberData.lastName,
+			// 	birthDate: memberData.birthDate,
+			// 	freeTransfer: memberData.freeTransfer,
+			// 	freeTransferDate: memberData.freeTransferDate,
+			// 	contractEndYear: memberData.contractEndYear,
+			// 	teamId: memberData.teamId,
+			// 	temporaryTeamId: memberData.temporaryTeamId,
+			// 	statusId: memberData.statusId,
+			// 	membershipDate: memberData.membershipDate,
+			// 	loanOptionDate: memberData.loanOptionDate,
+			// 	loanOptionTeam: memberData.loanOptionTeam,
+			// 	// idoneity: memberData.idoneity,
+			// 	trainedInItaly36Months:
+			// 		memberData.trainedInItaly36Months,
+			// 	trainedInItaly3Seasons:
+			// 		memberData.trainedInItaly3Seasons,
+			// 	trainedInTeam36Months: memberData.trainedInTeam36Months,
+			// 	trainedInTeam3Seasons: memberData.trainedInTeam3Seasons,
+			// 	contractConstraint: memberData.contractConstraint,
+			// 	city: memberData.city,
+			// 	provinceId: memberData.provinceId,
+			// 	taxCode: memberData.taxCode,
+			// 	// freeTransferCode: memberData.freeTransferCode,
+			// };
+			// if (existingLegaMember) {
+			// 	// Create a new FIGC member and relate it to the existing Lega member via Player
+			// 	const newFigcMember = this.memberFigcRepo.create({
+			// 		...newMemberData,
+			// 	});
+			// 	const savedFigcMember = await this.memberFigcRepo.save(
+			// 		newFigcMember
+			// 	);
+			// 	// Create a new Player relationship
+			// 	const newPlayer = this.playerRepo.create({
+			// 		memberFigc: savedFigcMember,
+			// 		memberLega: existingLegaMember,
+			// 	});
+			// 	await this.playerRepo.save(newPlayer);
+			// 	return savedFigcMember;
+			// } else {
+			// 	// No record in Lega, create a new FIGC member and a new Player relationship
+			// 	const newFigcMember = this.memberFigcRepo.create({
+			// 		...newMemberData,
+			// 	});
+			// 	const savedFigcMember = await this.memberFigcRepo.save(
+			// 		newFigcMember
+			// 	);
+			// 	const newPlayer = this.playerRepo.create({
+			// 		memberFigc: savedFigcMember,
+			// 	});
+			// 	await this.playerRepo.save(newPlayer);
+			// 	return savedFigcMember;
+			// }
 		}
 	}
 
@@ -214,10 +269,11 @@ export class SynchronizationService {
 			mappedData.map(async (player: any) => {
 				console.log(player, '>>>>>>>>>>>');
 
-				// await this.persistPlayerDataCheck(
-				// 	player['serial_number'],
-				// 	player
-				// );
+				await this.persistPlayerDataCheck(
+					player['serial_number'],
+					player,
+					team['serialnumber']
+				);
 			});
 		});
 
