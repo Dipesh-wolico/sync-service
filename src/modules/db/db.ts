@@ -28,13 +28,14 @@ const entities = loadEntities(path.join(__dirname, './models'));
 
 let envConfig = {};
 if (process.env?.USE_VPC_CONNECTOR) {
-	envConfig = {
-		socket: 'ivory-pathway-412112:europe-west8:lega-calcio-db',
-		extra: {
-			socketPath:
-				'ivory-pathway-412112:europe-west8:lega-calcio-db',
-		},
-	};
+	// envConfig = {
+	// 	socket: 'ivory-pathway-412112:europe-west8:lega-calcio-db',
+	// 	extra: {
+	// 		socketPath:
+	// 			'ivory-pathway-412112:europe-west8:lega-calcio-db',
+	// 	},
+	// };
+	envConfig = { ssl: false };
 } else {
 	envConfig = { ssl: false };
 }

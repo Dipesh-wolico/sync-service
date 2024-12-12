@@ -3,8 +3,8 @@ import app from './app';
 import config from './config/config';
 import { PGDataSource } from './modules/db';
 // import { logger } from './modules/logger';
-// import { container } from 'tsyringe';
-// import { SynchronizationService } from './modules/database-synchronization/database-synchronization.service';
+import { container } from 'tsyringe';
+import { SynchronizationService } from './modules/database-synchronization/database-synchronization.service';
 
 let server: any;
 
@@ -16,10 +16,10 @@ PGDataSource.initialize()
 		});
 
 		// Initialize and run the SyncService
-		// const syncService = container.resolve(SynchronizationService);
-		// syncService.runSync().catch((err) => {
-		// 	console.error('Error in SyncService:', err);
-		// });
+		const syncService = container.resolve(SynchronizationService);
+		syncService.runSync().catch((err) => {
+			console.error('Error in SyncService:', err);
+		});
 	})
 	.catch((err: any) => {
 		// logger.error(`Error during DB connection! Reason: ${err}`);

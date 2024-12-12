@@ -1,7 +1,7 @@
 // import { Repository } from 'typeorm';
 import { MemberFIGC } from '../db/models/MemberFIGC';
-// import { Player } from '../db/models/Player';
-// import { MemberLega } from '../db/models/MemberLega';
+import { Player } from '../db/models/Player';
+import { MemberLega } from '../db/models/MemberLega';
 import { PGDataSource } from '../db';
 import { Parser } from 'xml2js';
 
@@ -15,20 +15,23 @@ import {
 	soapUrlTypes,
 	xmlParseType,
 } from '../constants/constants';
+import { Province } from '../db/models/Province';
 
 export class SynchronizationService {
-	// private playerRepo: Repository<Player>;
+	private playerRepo: Repository<Player>;
 	private memberFigcRepo: Repository<MemberFIGC>;
-	// private memberLegaRepo: Repository<MemberLega>;
+	private memberLegaRepo: Repository<MemberLega>;
 	public seasonRepo: Repository<Season>;
 	public seasonPeriodRepo: Repository<SeasonPeriod>;
+	public provincesRepo: Repository<Province>;
 
 	constructor() {
-		// this.playerRepo = PGDataSource.getRepository(Player);
+		this.playerRepo = PGDataSource.getRepository(Player);
 		this.memberFigcRepo = PGDataSource.getRepository(MemberFIGC);
-		// this.memberLegaRepo = PGDataSource.getRepository(MemberLega);
+		this.memberLegaRepo = PGDataSource.getRepository(MemberLega);
 		this.seasonPeriodRepo = PGDataSource.getRepository(SeasonPeriod);
 		this.seasonRepo = PGDataSource.getRepository(Season);
+		this.provincesRepo = PGDataSource.getRepository(Province);
 	}
 
 	/**
@@ -39,8 +42,11 @@ export class SynchronizationService {
 	public async persistPlayerDataCheck(
 		playerSerialNumber: string,
 		memberData: any,
-		teamSerialNumber: string
+		teamSerialNumber: string,
+		teamsMapper: any
 	) {
+		console.log(teamsMapper);
+
 		const extractStringValue = (data: any, key: string): string => {
 			return (data[key] as unknown as { string: string }).string;
 		};
@@ -61,21 +67,45 @@ export class SynchronizationService {
 			memberData,
 			'trainedInTeam3Seasons'
 		);
-		var trainedInItaly36Months = false;
-		var trainedInItaly3Seasons = false;
-		var trainedInTeam36Months = false;
-		var trainedInTeam3Seasons = false;
+
+		// var trainedInItaly36Months = false;
+		// var trainedInItaly3Seasons = false;
+		// var trainedInTeam36Months = false;
+		// var trainedInTeam3Seasons = false;
+
+		let trainedInItaly36Months = memberData.trainedInItaly36Months;
+		let trainedInItaly3Seasons = memberData.trainedInItaly3Seasons;
+		let trainedInTeam36Months = memberData.trainedInTeam36Months;
+		let trainedInTeam3Seasons = memberData.trainedInTeam3Seasons;
+
+		// const checkTrainingStatus = (
+		// 	trainingData: any,
+		// 	trainingValue: string,
+		// 	teamSerialNumber: string
+		// ): boolean => {
+		// 	return (
+		// 		trainingData == '1' ||
+		// 		trainingData == '2' ||
+		// 		trainingValue == teamSerialNumber
+		// 	);
+
+		// };
 
 		const checkTrainingStatus = (
 			trainingData: any,
-			trainingValue: string,
-			teamSerialNumber: string
-		): boolean => {
-			return (
-				trainingData == '1' ||
-				trainingData == '2' ||
-				trainingValue == teamSerialNumber
-			);
+			trainingValue: any,
+			teamSerialNumber: any
+		): any => {
+			console.log('teamSerialNumber', teamSerialNumber);
+			if (
+				trainingData &&
+				(trainingData === '1' || trainingData === '0')
+			) {
+				return Number(trainingData);
+			} else {
+				// trainingValue = teamsMapper[trainingValue];
+				return Number(trainingValue);
+			}
 		};
 
 		trainedInItaly36Months = checkTrainingStatus(
@@ -106,104 +136,158 @@ export class SynchronizationService {
 			serialNumber: Number(playerSerialNumber),
 		});
 
-		if (existingFigcMember) {
-			// Update the existing FIGC member
-			// this.memberFigcRepo.merge(existingFigcMember, memberData);
-			existingFigcMember.serialNumber = memberData.serialNumber;
-			existingFigcMember.firstName = memberData.firstName;
-			existingFigcMember.lastName = memberData.lastName;
-			existingFigcMember.birthDate = memberData.birthDate;
-			existingFigcMember.freeTransfer = memberData.freeTransfer;
-			existingFigcMember.freeTransferDate =
-				memberData.freeTransferDate;
-			existingFigcMember.contractEndYear =
-				memberData.contractEndYear;
-			existingFigcMember.teamId = memberData.teamId;
-			existingFigcMember.temporaryTeamId =
-				memberData.temporaryTeamId;
-			existingFigcMember.statusId = memberData.statusId;
-			existingFigcMember.membershipDate = memberData.membershipDate;
-			existingFigcMember.loanOptionDate = memberData.loanOptionDate;
-			existingFigcMember.loanOptionTeam = memberData.loanOptionTeam;
-			// existingFigcMember.idoneity = memberData.idoneity;
-			// existingFigcMember.trainedInItaly36Months =
-			// 	memberData.trainedInItaly36Months;
-			// existingFigcMember.trainedInItaly3Seasons =
-			// 	memberData.trainedInItaly3Seasons;
-			// existingFigcMember.trainedInTeam36Months =
-			// 	memberData.trainedInTeam36Months;
-			// existingFigcMember.trainedInTeam3Seasons =
-			// 	memberData.trainedInTeam3Seasons;
-			existingFigcMember.contractConstraint =
-				memberData.contractConstraint;
-			existingFigcMember.city = memberData.city;
-			existingFigcMember.provinceId = memberData.provinceId;
-			existingFigcMember.taxCode = memberData.taxCode;
-			// existingFigcMember.freeTransferCode = memberData.freeTransferCode;
+		const provinceDetails = await this.provincesRepo.findOne({
+			where: {
+				code: memberData.province,
+			},
+			select: {
+				id: true,
+			},
+		});
 
-			// return await this.memberFigcRepo.save(existingFigcMember);
+		if (existingFigcMember) {
+			existingFigcMember.serialNumber = memberData.serial_number;
+			existingFigcMember.firstName = memberData.first_name;
+			existingFigcMember.lastName = memberData.last_name;
+			existingFigcMember.birthDate = memberData.birth_date;
+			existingFigcMember.freeTransfer = memberData.free_transfer;
+			existingFigcMember.freeTransferDate =
+				memberData.free_transfer_date;
+			existingFigcMember.contractEndYear =
+				memberData.contract_end_year;
+			existingFigcMember.teamId = memberData.teamid;
+			existingFigcMember.temporaryTeamId =
+				memberData.temporary_teamid;
+			existingFigcMember.statusId = memberData.statusid;
+			existingFigcMember.membershipDate =
+				memberData.membership_date;
+			existingFigcMember.city = memberData.city;
+			existingFigcMember.provinceId = provinceDetails?.id;
+			existingFigcMember.taxCode = memberData.tax_code;
+
+			// existingFigcMember.loanOptionDate = memberData.loanOptionDate;
+			// existingFigcMember.loanOptionTeam = memberData.loanOptionTeam;
+			// existingFigcMember.contractConstraint =
+			// 	memberData.contractConstraint;
+			// existingFigcMember.freeTransferCode =
+			// 	memberData.freeTransferCode;
+			// existingFigcMember.idoneity = memberData.idoneity;
+
+			existingFigcMember.teamId = memberData.teamid;
+			existingFigcMember.temporaryTeamId =
+				memberData.temporary_teamid;
+
+			existingFigcMember.trainedInItaly36Months =
+				typeof trainedInItaly36Months === 'number' &&
+				!isNaN(trainedInItaly36Months)
+					? trainedInItaly36Months
+					: undefined;
+			existingFigcMember.trainedInItaly3Seasons =
+				typeof trainedInItaly3Seasons === 'number' &&
+				!isNaN(trainedInItaly3Seasons)
+					? trainedInItaly3Seasons
+					: undefined;
+			existingFigcMember.trainedInTeam36Months =
+				typeof trainedInTeam36Months === 'number' &&
+				!isNaN(trainedInTeam36Months)
+					? trainedInTeam36Months
+					: undefined;
+			existingFigcMember.trainedInTeam3Seasons =
+				typeof trainedInTeam3Seasons === 'number' &&
+				!isNaN(trainedInTeam3Seasons)
+					? trainedInTeam3Seasons
+					: undefined;
+
+			return await this.memberFigcRepo.save(existingFigcMember);
 		} else {
-			// // No record in FIGC, check in Lega
-			// const existingLegaMember =
-			// 	await this.memberLegaRepo.findOneBy({
-			// 		serialNumber: Number(playerSerialNumber),
-			// 	});
-			// const newMemberData = {
-			// 	serialNumber: memberData.serialNumber,
-			// 	firstName: memberData.firstName,
-			// 	lastName: memberData.lastName,
-			// 	birthDate: memberData.birthDate,
-			// 	freeTransfer: memberData.freeTransfer,
-			// 	freeTransferDate: memberData.freeTransferDate,
-			// 	contractEndYear: memberData.contractEndYear,
-			// 	teamId: memberData.teamId,
-			// 	temporaryTeamId: memberData.temporaryTeamId,
-			// 	statusId: memberData.statusId,
-			// 	membershipDate: memberData.membershipDate,
-			// 	loanOptionDate: memberData.loanOptionDate,
-			// 	loanOptionTeam: memberData.loanOptionTeam,
-			// 	// idoneity: memberData.idoneity,
-			// 	trainedInItaly36Months:
-			// 		memberData.trainedInItaly36Months,
-			// 	trainedInItaly3Seasons:
-			// 		memberData.trainedInItaly3Seasons,
-			// 	trainedInTeam36Months: memberData.trainedInTeam36Months,
-			// 	trainedInTeam3Seasons: memberData.trainedInTeam3Seasons,
-			// 	contractConstraint: memberData.contractConstraint,
-			// 	city: memberData.city,
-			// 	provinceId: memberData.provinceId,
-			// 	taxCode: memberData.taxCode,
-			// 	// freeTransferCode: memberData.freeTransferCode,
-			// };
-			// if (existingLegaMember) {
-			// 	// Create a new FIGC member and relate it to the existing Lega member via Player
-			// 	const newFigcMember = this.memberFigcRepo.create({
-			// 		...newMemberData,
-			// 	});
-			// 	const savedFigcMember = await this.memberFigcRepo.save(
-			// 		newFigcMember
-			// 	);
-			// 	// Create a new Player relationship
-			// 	const newPlayer = this.playerRepo.create({
-			// 		memberFigc: savedFigcMember,
-			// 		memberLega: existingLegaMember,
-			// 	});
-			// 	await this.playerRepo.save(newPlayer);
-			// 	return savedFigcMember;
-			// } else {
-			// 	// No record in Lega, create a new FIGC member and a new Player relationship
-			// 	const newFigcMember = this.memberFigcRepo.create({
-			// 		...newMemberData,
-			// 	});
-			// 	const savedFigcMember = await this.memberFigcRepo.save(
-			// 		newFigcMember
-			// 	);
-			// 	const newPlayer = this.playerRepo.create({
-			// 		memberFigc: savedFigcMember,
-			// 	});
-			// 	await this.playerRepo.save(newPlayer);
-			// 	return savedFigcMember;
-			// }
+			// No record in FIGC, check in Lega
+			const existingLegaMember = await this.memberLegaRepo.findOne({
+				where: {
+					serialNumber: Number(playerSerialNumber),
+				},
+				select: {
+					id: true,
+				},
+			});
+
+			const createProvinces = await this.provincesRepo.create({
+				code: memberData.province,
+			});
+			const savedProvince = await this.provincesRepo.save(
+				createProvinces
+			);
+			const newMemberData = {
+				serialNumber: memberData.serial_number,
+				firstName: memberData.first_name,
+				lastName: memberData.last_name,
+				birthDate: memberData.birth_date,
+
+				freeTransfer: memberData.free_transfer,
+				freeTransferDate: memberData.free_transfer_date,
+				contractEndYear: memberData.contract_end_year,
+				teamId: memberData.teamid,
+				temporaryTeamId: memberData.temporary_teamid,
+				statusId: memberData.statusid,
+				membershipDate: memberData.membership_date,
+				// loanOptionTeam: ,
+				// loanOptionDate: ,
+				trainedInTeam3Seasons:
+					typeof trainedInTeam3Seasons === 'number' &&
+					!isNaN(trainedInTeam3Seasons)
+						? trainedInTeam3Seasons
+						: undefined,
+				trainedInTeam36Months:
+					typeof trainedInTeam36Months === 'number' &&
+					!isNaN(trainedInTeam36Months)
+						? trainedInTeam36Months
+						: undefined,
+				trainedInItaly3Seasons:
+					typeof trainedInItaly3Seasons === 'number' &&
+					!isNaN(trainedInItaly3Seasons)
+						? trainedInItaly3Seasons
+						: undefined,
+				trainedInItaly36Months:
+					typeof trainedInItaly36Months === 'number' &&
+					!isNaN(trainedInItaly36Months)
+						? trainedInItaly36Months
+						: undefined,
+				// contractConstraint: ,
+				city: memberData.city,
+				provinceId: savedProvince.id,
+				taxCode: memberData.tax_code,
+				// idoneity: ,
+				// freeTransferCode:
+			};
+
+			if (existingLegaMember) {
+				// Create a new FIGC member and relate it to the existing Lega member via Player
+				const newFigcMember = this.memberFigcRepo.create({
+					...newMemberData,
+				});
+				const savedFigcMember = await this.memberFigcRepo.save(
+					newFigcMember
+				);
+				// Create a new Player relationship
+				const newPlayer = this.playerRepo.create({
+					memberFigc: savedFigcMember,
+					memberLega: existingLegaMember,
+				});
+				await this.playerRepo.save(newPlayer);
+				return savedFigcMember;
+			} else {
+				// No record in Lega, create a new FIGC member and a new Player relationship
+				const newFigcMember = this.memberFigcRepo.create({
+					...newMemberData,
+				});
+				const savedFigcMember = await this.memberFigcRepo.save(
+					newFigcMember
+				);
+				const newPlayer = this.playerRepo.create({
+					memberFigc: savedFigcMember,
+				});
+				await this.playerRepo.save(newPlayer);
+				return savedFigcMember;
+			}
 		}
 	}
 
@@ -213,6 +297,8 @@ export class SynchronizationService {
 	 * @param memberData - Datas for the member to be saved or updated.
 	 */
 	public async saveMemberFIGC() {
+		console.log('Starting member sync service...');
+
 		const seasonPeriod = await this.seasonPeriodRepo.findOne({
 			where: {
 				startDate: LessThanOrEqual(new Date()),
@@ -255,27 +341,46 @@ export class SynchronizationService {
 			.limit(1)
 			.getRawMany();
 
+		const teamsMapper = seasonTeams.reduce((acc, team) => {
+			acc[team.serialnumber] = team.id;
+			return acc;
+		}, {});
+		// return teamsMapper;
 		let dataplayer;
-
-		seasonTeams.map(async (team) => {
-			console.log('team', team);
-
-			dataplayer = await this.getSoapPlayerData(
-				team['serialnumber']
-			);
-			const mappedData = await this.getMapedPlayerData(dataplayer);
-			console.log(mappedData, '>>>>>>>>>>>');
-
-			mappedData.map(async (player: any) => {
-				console.log(player, '>>>>>>>>>>>');
-
-				await this.persistPlayerDataCheck(
-					player['serial_number'],
-					player,
+		await Promise.all(
+			seasonTeams.map(async (team) => {
+				dataplayer = await this.getSoapPlayerData(
 					team['serialnumber']
 				);
-			});
-		});
+				const mappedData = await this.getMapedPlayerData(
+					dataplayer
+				);
+
+				mappedData.forEach(
+					(player: {
+						teamid: string;
+						temporary_teamid: string;
+						teamId: string | number;
+						temporaryTeamId: string | number;
+					}) => {
+						player.teamid = teamsMapper[player.teamid];
+						player.temporary_teamid =
+							teamsMapper[player.temporary_teamid];
+					}
+				);
+
+				await Promise.all(
+					mappedData.map(async (player: any) => {
+						await this.persistPlayerDataCheck(
+							player['serial_number'],
+							player,
+							team['serialnumber'],
+							teamsMapper
+						);
+					})
+				);
+			})
+		);
 
 		return {
 			data: 'success',
@@ -283,56 +388,73 @@ export class SynchronizationService {
 	}
 
 	public async getSoapPlayerData(serialNumber: number) {
-		console.log('serialNumber>>>>>>>>>', serialNumber);
-
 		const getPlayersForTeam = await this.getSoapServiceData(
 			serialNumber,
 			soapUrlTypes.TEAM_PLAYERS_DATA
 		);
-		const combinedPlayerData = await Promise.all(
-			getPlayersForTeam.slice(0, 5).map(async (player: any) => {
-				const playerSerialNumber = player['MATRICOLA'];
 
-				// player details SOAP service data
-				const playerData = await this.getSoapServiceData(
-					playerSerialNumber,
-					soapUrlTypes.PLAYER_DETAILS_DATA
+		const combinedPlayerData = [];
+		const batchSize = 1; // Process 2 players at a time
+		const delayMs = 5000; // 5 seconds delay
+		const traverseLength = 1;
+		for (let i = 0; i < traverseLength; i += batchSize) {
+			const batch = getPlayersForTeam.slice(i, i + batchSize);
+
+			const batchResults = await Promise.all(
+				batch.map(async (player: any) => {
+					const playerSerialNumber = player['MATRICOLA'];
+
+					// player details SOAP service data
+					const playerData = await this.getSoapServiceData(
+						playerSerialNumber,
+						soapUrlTypes.PLAYER_DETAILS_DATA
+					);
+
+					const trainedInItaly36Months =
+						await this.getSoapServiceData(
+							playerSerialNumber,
+							soapUrlTypes.TRAINED_IN_ITALY_36_MONTHS
+						);
+
+					const trainedInItaly3Seasons =
+						await this.getSoapServiceData(
+							playerSerialNumber,
+							soapUrlTypes.TRAINED_IN_ITALY_3_SEASONS
+						);
+
+					const trainedInTeam36Months =
+						await this.getSoapServiceData(
+							playerSerialNumber,
+							soapUrlTypes.TRAINED_IN_TEAM_36_MONTHS
+						);
+
+					const trainedInTeam3Seasons =
+						await this.getSoapServiceData(
+							playerSerialNumber,
+							soapUrlTypes.TRAINED_IN_TEAM_3_SEASONS
+						);
+
+					return {
+						...player,
+						...playerData,
+						trainedInItaly36Months,
+						trainedInItaly3Seasons,
+						trainedInTeam36Months,
+						trainedInTeam3Seasons,
+					};
+				})
+			);
+
+			combinedPlayerData.push(...batchResults);
+
+			// Add a delay of 5 seconds between batches
+			if (i + batchSize < getPlayersForTeam.length) {
+				await new Promise((resolve) =>
+					setTimeout(resolve, delayMs)
 				);
+			}
+		}
 
-				const trainedInItaly36Months =
-					await this.getSoapServiceData(
-						playerSerialNumber,
-						soapUrlTypes.TRAINED_IN_ITALY_36_MONTHS
-					);
-
-				const trainedInItaly3Seasons =
-					await this.getSoapServiceData(
-						playerSerialNumber,
-						soapUrlTypes.TRAINED_IN_ITALY_3_SEASONS
-					);
-
-				const trainedInTeam36Months =
-					await this.getSoapServiceData(
-						playerSerialNumber,
-						soapUrlTypes.TRAINED_IN_TEAM_36_MONTHS
-					);
-
-				const trainedInTeam3Seasons =
-					await this.getSoapServiceData(
-						playerSerialNumber,
-						soapUrlTypes.TRAINED_IN_TEAM_3_SEASONS
-					);
-
-				return {
-					...player,
-					...playerData,
-					trainedInItaly36Months,
-					trainedInItaly3Seasons,
-					trainedInTeam36Months,
-					trainedInTeam3Seasons,
-				};
-			})
-		);
 		return combinedPlayerData;
 	}
 
@@ -460,7 +582,7 @@ export class SynchronizationService {
 				}
 				// If rootNode is a string, find and extract the single matching node
 				const extracted = extractNode(result, rootNode);
-				return extracted.length === 1
+				return extracted?.length === 1
 					? extracted[0]
 					: extracted;
 			}
