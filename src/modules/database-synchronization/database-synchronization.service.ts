@@ -345,40 +345,47 @@ export class SynchronizationService {
 			acc[team.serialnumber] = team.id;
 			return acc;
 		}, {});
-		// return teamsMapper;
-		let dataplayer;
+
 		await Promise.all(
 			seasonTeams.map(async (team) => {
-				dataplayer = await this.getSoapPlayerData(
-					team['serialnumber']
-				);
-				const mappedData = await this.getMapedPlayerData(
-					dataplayer
-				);
+				const serialNumber = team.serialnumber;
 
-				mappedData.forEach(
-					(player: {
-						teamid: string;
-						temporary_teamid: string;
-						teamId: string | number;
-						temporaryTeamId: string | number;
-					}) => {
-						player.teamid = teamsMapper[player.teamid];
-						player.temporary_teamid =
-							teamsMapper[player.temporary_teamid];
-					}
-				);
+				// Process batch-by-batch
 
-				await Promise.all(
-					mappedData.map(async (player: any) => {
-						await this.persistPlayerDataCheck(
-							player['serial_number'],
-							player,
-							team['serialnumber'],
-							teamsMapper
-						);
-					})
-				);
+				for await (const dataplayerBatch of this.getSoapPlayerData(
+					serialNumber
+				)) {
+					const mappedData = await this.getMapedPlayerData(
+						dataplayerBatch
+					);
+
+					mappedData.forEach(
+						(player: {
+							teamid: string;
+							temporary_teamid: string;
+							teamId: string | number;
+							temporaryTeamId: string | number;
+						}) => {
+							player.teamid =
+								teamsMapper[player.teamid];
+							player.temporary_teamid =
+								teamsMapper[
+									player.temporary_teamid
+								];
+						}
+					);
+
+					await Promise.all(
+						mappedData.map(async (player: any) => {
+							await this.persistPlayerDataCheck(
+								player['serial_number'],
+								player,
+								serialNumber,
+								teamsMapper
+							);
+						})
+					);
+				}
 			})
 		);
 
@@ -387,17 +394,16 @@ export class SynchronizationService {
 		};
 	}
 
-	public async getSoapPlayerData(serialNumber: number) {
+	public async *getSoapPlayerData(serialNumber: number) {
 		const getPlayersForTeam = await this.getSoapServiceData(
 			serialNumber,
 			soapUrlTypes.TEAM_PLAYERS_DATA
 		);
 
-		const combinedPlayerData = [];
-		const batchSize = 1; // Process 2 players at a time
+		const batchSize = 100; // Process 2 players at a time
 		const delayMs = 5000; // 5 seconds delay
-		const traverseLength = 1;
-		for (let i = 0; i < traverseLength; i += batchSize) {
+
+		for (let i = 0; i < getPlayersForTeam.length; i += batchSize) {
 			const batch = getPlayersForTeam.slice(i, i + batchSize);
 
 			const batchResults = await Promise.all(
@@ -445,7 +451,7 @@ export class SynchronizationService {
 				})
 			);
 
-			combinedPlayerData.push(...batchResults);
+			yield batchResults; // Yield the batch as soon as it's ready
 
 			// Add a delay of 5 seconds between batches
 			if (i + batchSize < getPlayersForTeam.length) {
@@ -454,8 +460,6 @@ export class SynchronizationService {
 				);
 			}
 		}
-
-		return combinedPlayerData;
 	}
 
 	public async getSoapServiceData(
